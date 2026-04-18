@@ -4,7 +4,7 @@ using UnityEngine;
 namespace UnifyAudio
 {
     [CreateAssetMenu(menuName = "UnifyAudio/Signal")]
-    public class FMODSignal : ScriptableObject
+    public class UnifySignal : ScriptableObject
     {
         public event Action OnFired;
 

@@ -6,6 +6,6 @@ namespace UnifyAudio
     public class FMODParameterBinding
     {
         public string ParameterName;
-        public FMODLocalParameter Value;
+        public UnifyParameter Value;
     }
 }

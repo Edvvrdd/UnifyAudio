@@ -4,14 +4,14 @@ using UnifyAudio.Parameters;
 
 namespace UnifyAudio.Editor
 {
-    [CustomEditor(typeof(FMODLocalParameter))]
+    [CustomEditor(typeof(UnifyParameter))]
     public class FMODLocalParameterEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
             if (Application.isPlaying)
             {
-                FMODLocalParameter asset = (FMODLocalParameter)target;
+                UnifyParameter asset = (UnifyParameter)target;
                 using (new EditorGUI.DisabledScope(true))
                     EditorGUILayout.FloatField("Current value", asset.Value);
 

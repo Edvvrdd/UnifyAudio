@@ -5,7 +5,7 @@ using UnifyAudio.Parameters;
 
 namespace UnifyAudio.Editor
 {
-    [CustomEditor(typeof(FMODEventController))]
+    [CustomEditor(typeof(UnifyInstanceManager))]
     public class FMODEventControllerEditor : UnityEditor.Editor
     {
         private SerializedProperty _eventProperty;
@@ -40,18 +40,18 @@ namespace UnifyAudio.Editor
             _pauseSignals = serializedObject.FindProperty("_pauseSignals");
             _stopSignals = serializedObject.FindProperty("_stopSignals");
 
-            FMODEventController controller = (FMODEventController)target;
+            UnifyInstanceManager controller = (UnifyInstanceManager)target;
             _lastKnownGuid = controller.GetEventGuid();
             controller.SyncParametersFromEvent();
         }
 
         public override void OnInspectorGUI()
         {
-            FMODEventController controller = (FMODEventController)target;
+            UnifyInstanceManager controller = (UnifyInstanceManager)target;
             serializedObject.Update();
 
             EditorGUI.BeginDisabledGroup(true);
-            EditorGUILayout.ObjectField("Script", MonoScript.FromMonoBehaviour(controller), typeof(FMODEventController), false);
+            EditorGUILayout.ObjectField("Script", MonoScript.FromMonoBehaviour(controller), typeof(UnifyInstanceManager), false);
             EditorGUI.EndDisabledGroup();
 
             EditorGUILayout.Space();
@@ -90,8 +90,8 @@ namespace UnifyAudio.Editor
                     EditorGUI.BeginChangeCheck();
                     var assigned = EditorGUILayout.ObjectField(
                         paramValue.objectReferenceValue,
-                        typeof(FMODLocalParameter),
-                        false) as FMODLocalParameter;
+                        typeof(UnifyParameter),
+                        false) as UnifyParameter;
 
                     if (EditorGUI.EndChangeCheck())
                         paramValue.objectReferenceValue = assigned;

@@ -5,7 +5,7 @@ using FMODUnity;
 namespace UnifyAudio.Parameters
 {
     [CreateAssetMenu(menuName = "UnifyAudio/Global Parameter")]
-    public class FMODGlobalParameter : UnifyParameterAsset
+    public class UnifyGlobalParameter : UnifyParameterAsset
     {
         [ParamRef]
         public string Parameter;

@@ -5,7 +5,7 @@ using UnifyAudio.Parameters;
 
 namespace UnifyAudio.Editor
 {
-    [CustomEditor(typeof(FMODGlobalParameter))]
+    [CustomEditor(typeof(UnifyGlobalParameter))]
     public class FMODGlobalParameterEditor : UnityEditor.Editor
     {
         private SerializedProperty _parameterProperty;
@@ -16,13 +16,13 @@ namespace UnifyAudio.Editor
             _parameterProperty = serializedObject.FindProperty("Parameter");
             _lastKnownParameter = _parameterProperty.stringValue;
 
-            FMODGlobalParameter asset = (FMODGlobalParameter)target;
+            UnifyGlobalParameter asset = (UnifyGlobalParameter)target;
             asset.CacheParameterDescription();
         }
 
         public override void OnInspectorGUI()
         {
-            FMODGlobalParameter asset = (FMODGlobalParameter)target;
+            UnifyGlobalParameter asset = (UnifyGlobalParameter)target;
             serializedObject.Update();
 
             EditorGUILayout.PropertyField(_parameterProperty);
@@ -42,7 +42,7 @@ namespace UnifyAudio.Editor
             }
         }
 
-        private void DrawParameterInfo(FMODGlobalParameter asset)
+        private void DrawParameterInfo(UnifyGlobalParameter asset)
         {
             EditorGUILayout.LabelField("Parameter info", EditorStyles.boldLabel);
 

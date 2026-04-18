@@ -3,7 +3,7 @@ using UnifyAudio.Parameters;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "UnifyAudio/Parameter Value")]
-public class FMODLocalParameter : UnifyParameterAsset
+public class UnifyParameter : UnifyParameterAsset
 {
     private float _value;
     public float Value => _value;

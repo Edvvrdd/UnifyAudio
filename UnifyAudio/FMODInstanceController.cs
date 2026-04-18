@@ -7,7 +7,7 @@ using UnifyAudio.Parameters;
 
 namespace UnifyAudio
 {
-    public class FMODEventController : MonoBehaviour
+    public class UnifyInstanceManager : MonoBehaviour
     {
         [SerializeField] private EventReference _event;
         [SerializeField] private List<FMODParameterBinding> _parameters = new();
@@ -19,9 +19,9 @@ namespace UnifyAudio
         [SerializeField] private bool _playOnTriggerEnter;
         [SerializeField] private bool _pauseOnTriggerEnter;
         [SerializeField] private bool _stopOnTriggerEnter;
-        [SerializeField] private List<FMODSignal> _playSignals = new();
-        [SerializeField] private List<FMODSignal> _pauseSignals = new();
-        [SerializeField] private List<FMODSignal> _stopSignals = new();
+        [SerializeField] private List<UnifySignal> _playSignals = new();
+        [SerializeField] private List<UnifySignal> _pauseSignals = new();
+        [SerializeField] private List<UnifySignal> _stopSignals = new();
 
         private EventInstance _instance;
         private readonly List<Action<float>> _parameterCallbacks = new();
