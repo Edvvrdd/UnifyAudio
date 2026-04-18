@@ -8,11 +8,11 @@ A lightweight Unity toolkit for inspector-friendly FMOD event instance control. 
 
 ## Features
 
-- **FMODEventController** — a managed FMOD event instance with full lifecycle control, auto-detected local parameters, and guaranteed cleanup on destroy
-- **FMODSignal** — a ScriptableObject broadcast channel for decoupled, cross-scene event triggering
-- **FMODLocalParameter** — a reusable parameter handle any script can drive by reference
-- **FMODGlobalParameter** — inspector-friendly global parameter control with FMOD dropdown integration
-- **UnifyAudioDataSheet** — optional organizational layer for grouping FMOD events into typed SO assets, with a companion FMOD Studio export script
+- **UnifyInstanceManager** — a managed FMOD event instance with full lifecycle control, auto-detected local parameters, and guaranteed cleanup on destroy
+- **UnifySignal** — a ScriptableObject broadcast channel for decoupled, cross-scene event triggering
+- **UnifyParameter** — a reusable parameter handle any script can drive by reference
+- **UnifyGlobalParameter** — inspector-friendly global parameter control with FMOD dropdown integration
+- **UnifyEventCollection** — optional organizational layer for grouping FMOD events into typed SO assets, with a companion FMOD Studio export script
 
 ---
 
