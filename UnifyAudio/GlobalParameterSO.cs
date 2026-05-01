@@ -51,6 +51,47 @@ namespace UnifyAudio.Parameters
                 Debug.LogWarning($"[UnifyAudio] Could not find global parameter '{Parameter}' " +
                                  $"on asset '{name}'. Ensure your FMOD project is built and banks are imported.");
             }
+#else
+            FMOD.Studio.PARAMETER_DESCRIPTION description;
+            FMOD.RESULT result = RuntimeManager.StudioSystem
+                .getParameterDescriptionByName(Parameter, out description);
+
+            if (result != FMOD.RESULT.OK)
+            {
+                Debug.LogWarning($"[UnifyAudio] Could not find global parameter '{Parameter}' " +
+                                 $"on asset '{name}'. FMOD result: {result}.");
+                return;
+            }
+
+            _min = description.minimum;
+            _max = description.maximum;
+            _defaultValue = description.defaultvalue;
+
+            if ((description.flags & FMOD.Studio.PARAMETER_FLAGS.LABELED) != 0)
+            {
+                _parameterType = FMODUnity.ParameterType.Labeled;
+                var labels = new System.Collections.Generic.List<string>();
+                int index = 0;
+                while (true)
+                {
+                    string label;
+                    if (RuntimeManager.StudioSystem.getParameterLabelByID(description.id, index, out label) != FMOD.RESULT.OK)
+                        break;
+                    labels.Add(label);
+                    index++;
+                }
+                _labels = labels.ToArray();
+            }
+            else if ((description.flags & FMOD.Studio.PARAMETER_FLAGS.DISCRETE) != 0)
+            {
+                _parameterType = FMODUnity.ParameterType.Discrete;
+                _labels = Array.Empty<string>();
+            }
+            else
+            {
+                _parameterType = FMODUnity.ParameterType.Continuous;
+                _labels = Array.Empty<string>();
+            }
 #endif
         }
 

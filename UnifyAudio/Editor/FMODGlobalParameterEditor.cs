@@ -60,7 +60,7 @@ namespace UnifyAudio.Editor
                     EditorGUILayout.Space(4);
                     EditorGUILayout.LabelField("Labels", EditorStyles.miniBoldLabel);
                     for (int i = 0; i < asset.Labels.Length; i++)
-                        EditorGUILayout.LabelField($"  {i}  —  {asset.Labels[i]}");
+                        EditorGUILayout.LabelField($"  {i} -> {asset.Labels[i]}");
                 }
             }
         }

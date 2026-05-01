@@ -145,8 +145,22 @@ var UnifyAudio = {
             var filePath = outputPath + "/" + sheetName + ".cs";
 
             var file = studio.system.getFile(filePath);
-            file.open(studio.system.openMode.WriteOnly);
-            file.writeText(content);
+            if (!file) {
+                studio.system.print("[UnifyAudio] Error: Could not create file object for: " + filePath);
+                continue;
+            }
+
+            if (!file.open(studio.system.openMode.WriteOnly)) {
+                studio.system.print("[UnifyAudio] Error: Could not open file for writing: " + filePath);
+                continue;
+            }
+
+            if (!file.writeText(content)) {
+                studio.system.print("[UnifyAudio] Error: Failed to write to file: " + filePath);
+                file.close();
+                continue;
+            }
+
             file.close();
 
             studio.system.print("[UnifyAudio] Exported: " + filePath);
