@@ -148,37 +148,6 @@ namespace UnifyAudio
             return _instance.setParameterByName(parameterName, value);
         }
 
-#if UNITY_EDITOR
         public FMOD.GUID GetEventGuid() => _event.Guid;
-
-        public void SyncParametersFromEvent()
-        {
-            if (_event.IsNull)
-            {
-                _parameters.Clear();
-                return;
-            }
-
-            EditorEventRef eventRef = FMODUnity.EventManager.EventFromGUID(_event.Guid);
-            if (eventRef == null) return;
-
-            List<UnifyParameterBinding> synced = new();
-
-            foreach (var paramRef in eventRef.LocalParameters)
-            {
-                if (paramRef == null) continue;
-
-                UnifyParameterBinding existing = _parameters.Find(p => p.ParameterName == paramRef.Name);
-                synced.Add(new UnifyParameterBinding
-                {
-                    ParameterName = paramRef.Name,
-                    Value = existing != null ? existing.Value : null
-                });
-            }
-
-            _parameters = synced;
-            UnityEditor.EditorUtility.SetDirty(this);
-        }
-#endif
     }
 }
