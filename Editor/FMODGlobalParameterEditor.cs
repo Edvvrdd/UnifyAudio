@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEditor;
-using FMODUnity;
 using UnifyAudio.Parameters;
 
 namespace UnifyAudio.Editor
