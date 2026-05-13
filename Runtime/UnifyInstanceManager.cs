@@ -13,8 +13,8 @@ namespace UnifyAudio
         [SerializeField] private List<UnifyParameterBinding> _parameters = new();
         [SerializeField] private bool _playOnStart;
         [SerializeField] private bool _playOnEnable;
+        [SerializeField] private bool _resumeIfPaused;
         [SerializeField] private bool _pauseOnDisable;
-        [SerializeField] private bool _stopAndReleaseOnDestroy = true;
         [SerializeField] private bool _releaseOnStop;
         [SerializeField] private List<UnifySignal> _playSignals = new();
         [SerializeField] private List<UnifySignal> _pauseSignals = new();
@@ -42,6 +42,7 @@ namespace UnifyAudio
                     Action<float> callback = value => ApplyParameter(paramName, value);
                     _parameterCallbacks.Add(callback);
                     binding.Value.OnValueChanged += callback;
+                    ApplyParameter(paramName, binding.Value.Value);
                 }
                 else
                 {
@@ -94,13 +95,9 @@ namespace UnifyAudio
             foreach (var signal in _stopSignals)
                 if (signal != null) signal.OnFired -= Stop;
 
-            if (_stopAndReleaseOnDestroy && _instance.isValid())
+            if (_instance.isValid())
             {
                 _instance.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
-                _instance.release();
-            }
-            else if (_instance.isValid())
-            {
                 _instance.release();
             }
         }
@@ -112,6 +109,17 @@ namespace UnifyAudio
                 Debug.LogWarning($"[UnifyAudio] Play called on '{name}' but instance is not valid.");
                 return;
             }
+
+            if (_resumeIfPaused)
+            {
+                _instance.getPaused(out bool paused);
+                if (paused)
+                {
+                    _instance.setPaused(false);
+                    return;
+                }
+            }
+
             _instance.start();
         }
 
@@ -123,6 +131,16 @@ namespace UnifyAudio
                 return;
             }
             _instance.setPaused(true);
+        }
+
+        public void Unpause()
+        {
+            if (!_instance.isValid())
+            {
+                Debug.LogWarning($"[UnifyAudio] Unpause called on '{name}' but instance is not valid.");
+                return;
+            }
+            _instance.setPaused(false);
         }
 
         public void Stop()

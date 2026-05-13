@@ -8,11 +8,11 @@ A lightweight Unity toolkit for inspector-friendly FMOD event instance control. 
 
 ## Features
 
-- **UnifyInstanceManager** — a managed FMOD event instance with full lifecycle control, auto-detected local parameters, and guaranteed cleanup on destroy
-- **UnifySignal** — a ScriptableObject broadcast channel for decoupled, cross-scene event triggering
-- **UnifyParameter** — a reusable parameter handle any script can drive by reference
-- **UnifyGlobalParameter** — inspector-friendly global parameter control with FMOD dropdown integration
-- **UnifyEventCollection** — optional organizational layer for grouping FMOD events into typed SO assets, with a companion FMOD Studio export script
+- **UnifyInstanceManager** — managed FMOD event instance with full lifecycle control (play/pause/unpause/stop), auto-detected local parameter bindings with range/type metadata, and always-on stop-and-release on destroy
+- **UnifySignal** — ScriptableObject broadcast channel for decoupled, cross-scene event triggering
+- **UnifyParameter** — reusable local parameter handle any script can drive by reference; auto-syncs value to newly created FMOD instances
+- **UnifyGlobalParameter** — inspector-friendly global parameter control with FMOD dropdown, cached metadata, and OnValueChanged event for reactive UI
+- **UnifyEventCollection** — optional organizational layer for grouping FMOD events into typed SO assets, with companion FMOD Studio export script
 
 ---
 
@@ -44,18 +44,18 @@ Download or clone this repository and place the `UnifyAudio` folder inside your 
 
 ### 1. Control an FMOD event instance
 
-Add `FMODEventController` to any GameObject. Select your FMOD event from the dropdown. Configure lifecycle options:
+Add `UnifyInstanceManager` to any GameObject. Select your FMOD event from the dropdown. Configure lifecycle options:
 
 - **Play on Start** — plays when the scene loads
 - **Play on Enable / Pause on Disable** — ties audio state to object activation
-- **Stop and Release on Destroy** — always on by default, prevents instance leaks
+- **Resume if paused** — play signals unpause instead of restarting
 
 ### 2. Drive parameters without code
 
-If your FMOD event has local parameters, they appear automatically in the Parameters section of `FMODEventController`. Create a `FMODLocalParameter` asset via **Create → UnifyAudio → Parameter Value** and slot it into the corresponding parameter row. Any script holding a reference to that asset can call:
+If your FMOD event has local parameters, they appear automatically in the Parameters section of `UnifyInstanceManager`. Create a `UnifyParameter` asset via **Create → UnifyAudio → Parameter Value** and slot it into the corresponding parameter row. Any script holding a reference to that asset can call:
 
 ```csharp
-[SerializeField] private FMODLocalParameter _intensity;
+[SerializeField] private UnifyParameter _intensity;
 
 _intensity.SetValue(0.8f);
 ```
@@ -64,10 +64,10 @@ All controllers that have slotted that asset will respond simultaneously.
 
 ### 3. Trigger instances with signals
 
-Create a `FMODSignal` asset via **Create → UnifyAudio → Signal**. Slot it into the Play, Pause, or Stop signal slots on `FMODEventController`. Any script can then fire it:
+Create a `UnifySignal` asset via **Create → UnifyAudio → Signal**. Slot it into the Play, Pause, or Stop signal slots on `UnifyInstanceManager`. Any script can then fire it:
 
 ```csharp
-[SerializeField] private FMODSignal _onCinematicStart;
+[SerializeField] private UnifySignal _onCinematicStart;
 
 _onCinematicStart.Fire();
 ```
@@ -76,10 +76,10 @@ One signal can drive multiple controllers across different scenes simultaneously
 
 ### 4. Control global parameters
 
-Create a `FMODGlobalParameter` asset via **Create → UnifyAudio → Global Parameter**. Select the parameter from the FMOD dropdown. Call from any script:
+Create a `UnifyGlobalParameter` asset via **Create → UnifyAudio → Global Parameter**. Select the parameter from the FMOD dropdown. Call from any script:
 
 ```csharp
-[SerializeField] private FMODGlobalParameter _masterReverb;
+[SerializeField] private UnifyGlobalParameter _masterReverb;
 
 _masterReverb.SetValue(0.5f);
 ```
@@ -92,7 +92,9 @@ Event Collections are an optional organizational tool for larger projects. They 
 
 ### Unity side
 
-Extend `UnifyEventCollection` with your own fields:
+**Quick start (no FMOD Studio needed):** Create a collection from **Create → UnifyAudio → Event Collection → 5 / 10 / 20 Events**. Rename the fields in the inspector and drop in FMOD events. Use the generated class as a template if you need a different count.
+
+**Custom collections:** Extend `UnifyEventCollection` with your own fields:
 
 ```csharp
 [CreateAssetMenu(menuName = "UnifyAudio/Data Sheets/Player")]
@@ -123,7 +125,7 @@ For teams where a sound designer manages events in FMOD Studio, use the included
 
 **Setup:**
 
-1. Copy `UnifyAudioExport.js` from the `FMODScript` folder in this repo
+1. Copy `UnifyEventCollectionExport.js` from the `FmodScripts` folder in this repo
 2. Place it in the `Scripts` folder at the root of your FMOD Studio project
 3. Restart FMOD Studio — the script appears under **Scripts → UnifyAudio → Export Audio Data Sheets**
 
@@ -147,47 +149,9 @@ Run **Scripts → UnifyAudio → Export Audio Data Sheets**. When prompted, past
 
 ---
 
-## Architecture Overview
-
-```
-UnifyAudio
-├── Runtime
-│   ├── FMODEventController.cs       — instance owner and lifecycle manager
-│   ├── FMODParameterBinding.cs      — serializable parameter/SO binding
-│   ├── FMODSignal.cs                — broadcast signal ScriptableObject
-│   └── Parameters
-│       ├── UnifyParameterAsset.cs   — abstract base for parameter SOs
-│       ├── FMODParameterValue.cs    — local parameter value broadcaster
-│       └── FMODGlobalParameter.cs   — global parameter SO
-├── Editor
-│   ├── FMODEventControllerEditor.cs
-│   ├── FMODGlobalParameterEditor.cs
-│   └── FMODParameterValueEditor.cs
-├── DataSheets
-│   └── UnifyAudioDataSheet.cs       — abstract base for data sheet classes
-└── FMODScript
-    └── UnifyAudioExport.js          — FMOD Studio export script
-```
-
----
-
 ## Design Philosophy
 
-**1. Complement, never compete**
-
-UnifyAudio sets a new standard for FMOD and Unity integration without replacing what already works. Instance lifecycle management, runtime parameter driving, cross-scene signal routing are all new superpowers you can add on top of the existing FMOD components. Use both in the same project without conflict.
-
-**2. A shared language between disciplines**
-
-UnifyAudio treats the Unity inspector as a communication surface for both programmers and sound designers. Flexible and visible Scriptable Objects for managing data flow, auto complete fields to help understand which data goes where. Everything is inspector oriented to bring clarity to the sound design process.
-
-**3. Modular by design**
-
-Every feature is independently usable. Audio wiring lives in the project as assets, not buried in scene hierarchies or hardcoded in scripts. Free and open license to allow users to customize each component without worrying about breaking the whole structure.  
-
-**4. Less boilerplate, more craft**
-
-The time spent typing FMOD API calls, chasing null instance bugs, or hunting mistyped parameter strings is time not spent designing audio systems. UnifyAudio handles the repetitive and error-prone parts so the people building the game can focus on what actually makes the audio interesting.
+UnifyAudio is a thin ScriptableObject layer that sits beside FMOD — not on top of it. It complements the existing FMOD components, not replaces them. Parameters and signals live as project assets that survive scene loads, so audio wiring is visible, shareable, and decoupled from scene hierarchies. Event collections keep your FMOD references organized without chasing down GUIDs. The goal is simple: stop reopening FMOD Studio just to check a parameter range, and stop writing the same boilerplate every time you need a sound to react to gameplay.
 
 ---
 
@@ -202,3 +166,17 @@ MIT — see [LICENSE](LICENSE) for details.
 - [Alessandro Famà](https://alessandrofama.com) — FMOD ScriptableObject pattern and FMOD Studio scripting approach
 - [Ryan Hipple](http://ryanjboyer.com) — ScriptableObject signal architecture
 - [FMOD](https://www.fmod.com) — audio middleware
+
+---
+
+## Version History
+
+### 1.0.2 — Maintenance Update
+- **UnifyInstanceManager** — Added `Unpause()` method and "Resume if paused" toggle in Play Signals. Removed stop-and-release toggle (now always on to prevent instance leaks). Inspector reorganized — auto-triggers consolidated into their respective signal sections. Local parameter bindings now show foldout metadata (type, range, default, labels) sourced from the FMOD event.
+- **UnifyGlobalParameter** — Now exposes `Value` property and `OnValueChanged` event for reactive UI binding.
+- **UnifyParameter** — New subscribers now receive the parameter's current value immediately upon binding.
+- **UnifyEventCollection** — Added `UnifyEventCollection5/10/20` — quick manual collections via Create menu, no FMOD Studio export needed.
+- Removed misleading thread-safety warning; documented actual thread-safety model.
+
+### 1.0.0 — Initial Release
+- Core SO-driven architecture for FMOD event instance management, parameters, signals, and event collections.

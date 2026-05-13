@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using FMODUnity;
 using UnifyAudio.Parameters;
+using ParameterType = UnifyAudio.Parameters.ParameterType;
 
 namespace UnifyAudio.Editor
 {
@@ -13,14 +14,15 @@ namespace UnifyAudio.Editor
         private SerializedProperty _parametersProperty;
         private SerializedProperty _playOnStart;
         private SerializedProperty _playOnEnable;
+        private SerializedProperty _resumeIfPaused;
         private SerializedProperty _pauseOnDisable;
-        private SerializedProperty _stopAndReleaseOnDestroy;
         private SerializedProperty _releaseOnStop;
         private SerializedProperty _playSignals;
         private SerializedProperty _pauseSignals;
         private SerializedProperty _stopSignals;
 
         private FMOD.GUID _lastKnownGuid;
+        private List<bool> _parameterFoldouts = new();
 
         private void OnEnable()
         {
@@ -28,8 +30,8 @@ namespace UnifyAudio.Editor
             _parametersProperty = serializedObject.FindProperty("_parameters");
             _playOnStart = serializedObject.FindProperty("_playOnStart");
             _playOnEnable = serializedObject.FindProperty("_playOnEnable");
+            _resumeIfPaused = serializedObject.FindProperty("_resumeIfPaused");
             _pauseOnDisable = serializedObject.FindProperty("_pauseOnDisable");
-            _stopAndReleaseOnDestroy = serializedObject.FindProperty("_stopAndReleaseOnDestroy");
             _releaseOnStop = serializedObject.FindProperty("_releaseOnStop");
             _playSignals = serializedObject.FindProperty("_playSignals");
             _pauseSignals = serializedObject.FindProperty("_pauseSignals");
@@ -72,43 +74,95 @@ namespace UnifyAudio.Editor
             }
             else
             {
+                while (_parameterFoldouts.Count < _parametersProperty.arraySize)
+                    _parameterFoldouts.Add(false);
+                while (_parameterFoldouts.Count > _parametersProperty.arraySize)
+                    _parameterFoldouts.RemoveAt(_parameterFoldouts.Count - 1);
+
                 for (int i = 0; i < _parametersProperty.arraySize; i++)
                 {
                     SerializedProperty binding = _parametersProperty.GetArrayElementAtIndex(i);
                     SerializedProperty paramName = binding.FindPropertyRelative("ParameterName");
                     SerializedProperty paramValue = binding.FindPropertyRelative("Value");
+                    SerializedProperty minProp = binding.FindPropertyRelative("Min");
+                    SerializedProperty maxProp = binding.FindPropertyRelative("Max");
+                    SerializedProperty defaultProp = binding.FindPropertyRelative("DefaultValue");
+                    SerializedProperty typeProp = binding.FindPropertyRelative("ParameterType");
+                    SerializedProperty labelsProp = binding.FindPropertyRelative("Labels");
+
+                    ParameterType pType = (ParameterType)typeProp.enumValueIndex;
+                    bool isLabeled = pType == ParameterType.Labeled;
 
                     EditorGUILayout.BeginHorizontal();
 
-                    EditorGUI.BeginDisabledGroup(true);
-                    EditorGUILayout.TextField(paramName.stringValue, GUILayout.Width(160));
-                    EditorGUI.EndDisabledGroup();
+                    string foldoutLabel = paramName.stringValue;
+                    if (string.IsNullOrEmpty(foldoutLabel))
+                        foldoutLabel = "(unnamed)";
+
+                    _parameterFoldouts[i] = EditorGUILayout.Foldout(
+                        _parameterFoldouts[i],
+                        foldoutLabel,
+                        true
+                    );
 
                     EditorGUI.BeginChangeCheck();
                     var assigned = EditorGUILayout.ObjectField(
                         paramValue.objectReferenceValue,
                         typeof(UnifyParameter),
-                        false) as UnifyParameter;
-
+                        false
+                    ) as UnifyParameter;
                     if (EditorGUI.EndChangeCheck())
                         paramValue.objectReferenceValue = assigned;
 
                     EditorGUILayout.EndHorizontal();
+
+                    if (_parameterFoldouts[i])
+                    {
+                        EditorGUI.indentLevel++;
+
+                        string typeLabel = GetTypeShortName(pType);
+                        string rangeLabel = $"{minProp.floatValue:F2} — {maxProp.floatValue:F2}";
+
+                        using (new EditorGUI.DisabledScope(true))
+                        {
+                            EditorGUILayout.TextField("Type", typeLabel);
+                            EditorGUILayout.TextField("Range", rangeLabel);
+                            EditorGUILayout.FloatField("Default", defaultProp.floatValue);
+
+                            if (isLabeled && labelsProp.arraySize > 0)
+                            {
+                                EditorGUILayout.Space(2);
+                                EditorGUILayout.LabelField("Labels", EditorStyles.miniBoldLabel);
+                                EditorGUI.indentLevel++;
+                                for (int j = 0; j < labelsProp.arraySize; j++)
+                                {
+                                    string label = labelsProp.GetArrayElementAtIndex(j).stringValue;
+                                    EditorGUILayout.LabelField($"{j} → {label}");
+                                }
+                                EditorGUI.indentLevel--;
+                            }
+                        }
+
+                        EditorGUI.indentLevel--;
+                    }
                 }
             }
 
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Auto Triggers", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Play Signals", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_playOnStart);
             EditorGUILayout.PropertyField(_playOnEnable);
-            EditorGUILayout.PropertyField(_pauseOnDisable);
-            EditorGUILayout.PropertyField(_stopAndReleaseOnDestroy);
-            EditorGUILayout.PropertyField(_releaseOnStop);
+            EditorGUILayout.PropertyField(_resumeIfPaused);
+            EditorGUILayout.PropertyField(_playSignals);
 
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Signal Slots", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(_playSignals);
+            EditorGUILayout.LabelField("Pause Signals", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(_pauseOnDisable);
             EditorGUILayout.PropertyField(_pauseSignals);
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Stop Signals", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(_releaseOnStop);
             EditorGUILayout.PropertyField(_stopSignals);
 
             serializedObject.ApplyModifiedProperties();
@@ -151,10 +205,34 @@ namespace UnifyAudio.Editor
 
                 existingValues.TryGetValue(paramRef.Name, out Object preservedValue);
                 binding.FindPropertyRelative("Value").objectReferenceValue = preservedValue;
+
+                binding.FindPropertyRelative("Min").floatValue = paramRef.Min;
+                binding.FindPropertyRelative("Max").floatValue = paramRef.Max;
+                binding.FindPropertyRelative("DefaultValue").floatValue = paramRef.Default;
+                binding.FindPropertyRelative("ParameterType").enumValueIndex = (int)(ParameterType)paramRef.Type;
+
+                SerializedProperty labelsProp = binding.FindPropertyRelative("Labels");
+                labelsProp.ClearArray();
+                if (paramRef.Labels != null)
+                {
+                    for (int j = 0; j < paramRef.Labels.Length; j++)
+                    {
+                        labelsProp.InsertArrayElementAtIndex(j);
+                        labelsProp.GetArrayElementAtIndex(j).stringValue = paramRef.Labels[j];
+                    }
+                }
             }
 
             serializedObject.ApplyModifiedProperties();
             EditorUtility.SetDirty(controller);
         }
+
+        private static string GetTypeShortName(ParameterType type) => type switch
+        {
+            ParameterType.Continuous => "Continuous",
+            ParameterType.Discrete => "Discrete",
+            ParameterType.Labeled => "Labeled",
+            _ => "Unknown"
+        };
     }
 }

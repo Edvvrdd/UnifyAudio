@@ -1,7 +1,7 @@
 {
     "name": "com.github.codingnoises.unifyaudio",
     "displayName": "UnifyAudio",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "unity": "2021.3",
     "description": "ScriptableObject-driven audio abstraction layer built on top of FMOD for Unity. Consolidates FMOD boilerplate into SO-driven components for dynamic parameter modulation, event management, and decoupled audio logic.",
     "keywords": [

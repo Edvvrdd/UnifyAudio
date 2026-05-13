@@ -19,7 +19,7 @@ namespace UnifyAudio.Parameters
 
         public void SetValue(float value)
         {
-            WarnIfOffMainThread(name);
+            // WarnIfOffMainThread(name);
             _value = value;
             OnValueChanged?.Invoke(value);
         }

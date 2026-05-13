@@ -22,6 +22,11 @@ namespace UnifyAudio.Parameters
         public ParameterType ParameterType => _parameterType;
         public string[] Labels => _labels;
 
+        private float _currentValue;
+        public float Value => _currentValue;
+
+        public event Action<float> OnValueChanged;
+
 #if UNITY_EDITOR
         public static Func<UnifyGlobalParameter, bool> EditorCacheDelegate;
 
@@ -39,6 +44,7 @@ namespace UnifyAudio.Parameters
         protected override void OnEnable()
         {
             base.OnEnable();
+            OnValueChanged = null;
             CacheParameterDescription();
         }
 
@@ -96,7 +102,7 @@ namespace UnifyAudio.Parameters
 
         public void SetValue(float value)
         {
-            WarnIfOffMainThread(name);
+            // WarnIfOffMainThread(name);
 
             if (string.IsNullOrEmpty(Parameter))
             {
@@ -122,7 +128,11 @@ namespace UnifyAudio.Parameters
             {
                 Debug.LogWarning($"[UnifyAudio] Failed to set global parameter '{Parameter}' " +
                                  $"on asset '{name}'. FMOD result: {result}.");
+                return;
             }
+
+            _currentValue = value;
+            OnValueChanged?.Invoke(value);
         }
     }
 }
